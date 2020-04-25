@@ -8,7 +8,6 @@ import org.junit.Test;
 import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Test cases for the ElbonianArabicConverter class.
@@ -59,7 +58,7 @@ public class ConverterTests {
     public void checkAll() throws ValueOutOfBoundsException, MalformedNumberException {
         HashMap<String, Integer> hashMap = new HashMap<>();
         // Check every possible arabic value
-        for(int i = 1; i < 2999; i++) {
+        for (int i = 1; i < 2999; i++) {
             ElbonianArabicConverter converter = new ElbonianArabicConverter(i + "");
             hashMap.put(converter.toElbonian(), i);
             assertEquals(converter.toArabic(), i);
@@ -153,7 +152,7 @@ public class ConverterTests {
     }
 
     @Test(expected = MalformedNumberException.class)
-    public void checkTrimAndSpaceBetween() throws ValueOutOfBoundsException, MalformedNumberException{
+    public void checkTrimAndSpaceBetween() throws ValueOutOfBoundsException, MalformedNumberException {
         new ElbonianArabicConverter(" 9 9 ");
     }
 
@@ -185,5 +184,55 @@ public class ConverterTests {
     @Test(expected = MalformedNumberException.class)
     public void checkMinDouble() throws ValueOutOfBoundsException, MalformedNumberException {
         new ElbonianArabicConverter(Double.MIN_VALUE + "");
+    }
+
+    @Test(expected = MalformedNumberException.class)
+    public void checkCommaDecimal() throws ValueOutOfBoundsException, MalformedNumberException {
+        new ElbonianArabicConverter("100.0");
+    }
+
+    @Test(expected = MalformedNumberException.class)
+    public void checkRoundingDecimal() throws ValueOutOfBoundsException, MalformedNumberException {
+        new ElbonianArabicConverter("100.5");
+    }
+
+    @Test(expected = ValueOutOfBoundsException.class)
+    public void checkComma() throws ValueOutOfBoundsException, MalformedNumberException {
+        new ElbonianArabicConverter("100,100");
+    }
+
+    @Test
+    public void checkCommaPass() throws ValueOutOfBoundsException, MalformedNumberException {
+        ElbonianArabicConverter converter = new ElbonianArabicConverter("1,129");
+        assertEquals(converter.toArabic(), 1129);
+    }
+
+    @Test(expected = MalformedNumberException.class)
+    public void checkNewLine() throws ValueOutOfBoundsException, MalformedNumberException {
+        new ElbonianArabicConverter("\n100");
+    }
+
+    @Test(expected = MalformedNumberException.class)
+    public void checkTabs() throws ValueOutOfBoundsException, MalformedNumberException {
+        new ElbonianArabicConverter("\t100");
+    }
+
+    @Test(expected = MalformedNumberException.class)
+    public void checkLeadingZeroes() throws ValueOutOfBoundsException, MalformedNumberException {
+        new ElbonianArabicConverter("01");
+    }
+    @Test(expected = ValueOutOfBoundsException.class)
+    public void checkZero() throws ValueOutOfBoundsException, MalformedNumberException {
+        new ElbonianArabicConverter("0");
+    }
+
+    @Test(expected = MalformedNumberException.class)
+    public void checkBadCommas() throws ValueOutOfBoundsException, MalformedNumberException {
+        new ElbonianArabicConverter("1,2,3,4");
+    }
+
+    @Test(expected = MalformedNumberException.class)
+    public void checkBadCommasAgain() throws ValueOutOfBoundsException, MalformedNumberException {
+        new ElbonianArabicConverter("100,4");
     }
 }

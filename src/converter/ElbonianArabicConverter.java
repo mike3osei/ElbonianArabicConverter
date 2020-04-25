@@ -3,8 +3,13 @@ package converter;
 import converter.exceptions.MalformedNumberException;
 import converter.exceptions.ValueOutOfBoundsException;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This class implements a converter that takes a string that represents a number in either the
@@ -42,17 +47,17 @@ public class ElbonianArabicConverter {
         fillWithDoubleCharacters(doubleCharacters);
         fillWithCharacterValues(characterValues);
         fillWithPointsRemaining(pointsRemaining);
-        // TODO check to see if the number is valid, then set it equal to the string
         // Check if the string is a valid Arabic numeral
-        String trimmedString = number.trim();
-        if(trimmedString.length() > 0) {
+        String trimmedString = number.replaceFirst(" +$", "");
+        trimmedString = trimmedString.replaceFirst("^ +", "");
+        if (trimmedString.length() > 0) {
             if (checkArabic(trimmedString)) {
                 this.type = Type.ARABIC;
             } else {
                 checkElbonian(trimmedString);
                 this.type = Type.ELBONIAN;
             }
-            this.number = trimmedString;
+            this.number = trimmedString.replaceAll(",","");
         } else {
             throw new MalformedNumberException("String was empty or had no content");
         }
@@ -84,13 +89,35 @@ public class ElbonianArabicConverter {
         array.put('K', 6);
     }
 
-    private boolean checkArabic(String string) throws ValueOutOfBoundsException {
+    private boolean checkArabic(String string) throws ValueOutOfBoundsException, MalformedNumberException {
         try {
-            int arabicRepresentation = Integer.parseInt(string);
+            Pattern pattern = Pattern.compile("\\s");
+            Matcher matcher = pattern.matcher(string);
+            boolean found = matcher.find();
+            if(found) {
+                throw new MalformedNumberException("Arabic numeral had spaces after trimming");
+            }
+            Pattern pattern3 = Pattern.compile("^\\d{1,3}(,\\d{3})*$");
+            Matcher matcher3 = pattern3.matcher(string);
+            boolean found3 = matcher3.find();
+            if(string.contains(",") && !found3) {
+                throw new MalformedNumberException("Arabic numeral commas are not placed in thousandths");
+            }
+            NumberFormat nf = NumberFormat.getIntegerInstance(Locale.US);
+            nf.setParseIntegerOnly(true);
+            int arabicRepresentation = nf.parse(string).intValue();
+            Pattern pattern2 = Pattern.compile("^(0+)");
+            Matcher matcher2 = pattern2.matcher(string);
+            boolean found2 = matcher2.find();
+            if(arabicRepresentation > 0 && found2) {
+                throw new MalformedNumberException("Arabic numeral had leading zeroes");
+            }
             if (arabicRepresentation < 1 || arabicRepresentation > 2999) {
                 throw new ValueOutOfBoundsException("Arabic numeral was out of Elbonian number bounds");
+            } else if (string.contains(".")) {
+                throw new MalformedNumberException("Arabic numberal was malformed");
             }
-        } catch (NumberFormatException e) {
+        } catch (ParseException e) {
             return false;
         }
         return true;
@@ -146,11 +173,7 @@ public class ElbonianArabicConverter {
             return false;
         } else if (string.contains("Y") && string.contains("Z") && string.contains("X")) {
             return false;
-        } else if (string.contains("J") && string.contains("K") && string.contains("I")) {
-            return false;
-        } else {
-            return true;
-        }
+        } else return !string.contains("J") || !string.contains("K") || !string.contains("I");
     }
 
     public void fillWithDoubleCharacters(ArrayList<Character> array) {
